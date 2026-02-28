@@ -1,7 +1,7 @@
 {
   "name": "discord-bot-handler",
   "version": "1.0.0",
-  "description": "A versatile Discord.js bot handler"
+  "description": "A versatile Discord.js bot handler",
   "type": "module",
   "scripts": {
     "start": "bun src/bot.js",
@@ -45,7 +45,6 @@
     "drizzle-orm": "^0.45.1",
     "fs-extra": "^11.3.3",
     "ioredis": "^5.9.2",
-    "node-cron": "^4.2.1",
     "pg": "^8.18.0",
     "postgres": "^3.4.8",
     "prettier": "^3.8.1"
