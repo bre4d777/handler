@@ -6,15 +6,29 @@ import { logger } from '#utils';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+/**
+ * Discovers, imports, and registers all event files.
+ *
+ * Events are organised under `events/<type>/`, where `<type>` corresponds to a
+ * handler class in `event-handlers/`. Each handler is responsible for registering
+ * events with its own target (e.g. the Discord client, a voice connection, etc.).
+ */
 export class EventLoader {
+	/** @param {import('#classes/client').Bot} client */
 	constructor(client) {
 		this.client = client;
+		/** @type {Map<string, Object[]>} Event type → list of loaded event modules. */
 		this.loadedEvents = new Map();
+		/** @type {Map<string, Object>} Event type → handler instance. */
 		this.handlers = new Map();
 		this.eventsPath = path.join(__dirname, '../../events');
 		this.handlersPath = path.join(__dirname, 'event-handlers');
 	}
 
+	/**
+	 * Entry point: loads all handlers then discovers and registers all event files.
+	 * @returns {Promise<boolean>} `true` on success, `false` if a top-level error occurs.
+	 */
 	async loadAllEvents() {
 		try {
 			await this.loadHandlers();
@@ -34,6 +48,11 @@ export class EventLoader {
 		}
 	}
 
+	/**
+	 * Imports every `.js` file in `event-handlers/`, instantiates each default export,
+	 * and stores the instance in {@link handlers} keyed by the filename (sans `-handler.js`).
+	 * @returns {Promise<void>}
+	 */
 	async loadHandlers() {
 		try {
 			if (!fs.existsSync(this.handlersPath)) {
@@ -60,6 +79,11 @@ export class EventLoader {
 		}
 	}
 
+	/**
+	 * Reads the top-level directories under `events/`. Each directory name is treated as an
+	 * event type and must have a matching handler; unmatched types are skipped with a warning.
+	 * @returns {Promise<void>}
+	 */
 	async loadEventsByType() {
 		try {
 			if (!fs.existsSync(this.eventsPath)) {
@@ -88,6 +112,12 @@ export class EventLoader {
 		}
 	}
 
+	/**
+	 * Recursively walks `dirPath` and loads every `.js` file as an event.
+	 * @param {string} dirPath
+	 * @param {string} eventType
+	 * @returns {Promise<void>}
+	 */
 	async recursiveLoadEvents(dirPath, eventType) {
 		try {
 			const entries = await fs.promises.readdir(dirPath, {
@@ -108,6 +138,13 @@ export class EventLoader {
 		}
 	}
 
+	/**
+	 * Imports a single event file, passes its default export to the appropriate handler
+	 * for registration, and records it in {@link loadedEvents}.
+	 * @param {string} filePath - Absolute path to the event file.
+	 * @param {string} eventType
+	 * @returns {Promise<void>}
+	 */
 	async loadEventFile(filePath, eventType) {
 		try {
 			const module = await import(`file://${filePath}`);
@@ -133,14 +170,27 @@ export class EventLoader {
 		}
 	}
 
+	/**
+	 * Returns a plain object snapshot of all loaded events grouped by type.
+	 * @returns {Object.<string, Object[]>}
+	 */
 	getLoadedEvents() {
 		return Object.fromEntries(this.loadedEvents);
 	}
 
+	/**
+	 * Returns the names of all registered handler types.
+	 * @returns {string[]}
+	 */
 	getHandlers() {
 		return Array.from(this.handlers.keys());
 	}
 
+	/**
+	 * Reads the `events/` directory and returns the names of all subdirectories
+	 * (i.e. the available event types), without importing anything.
+	 * @returns {string[]}
+	 */
 	getAvailableEventTypes() {
 		try {
 			if (!fs.existsSync(this.eventsPath)) return [];

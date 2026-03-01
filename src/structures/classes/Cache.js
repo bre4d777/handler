@@ -2,7 +2,23 @@ import Redis from 'ioredis';
 import { Rei } from '#classes/Rei';
 import { logger } from '#utils';
 
+/**
+ * Dual-backend cache manager supporting Redis (with automatic fallback to in-memory)
+ * or pure in-memory storage via {@link Rei}.
+ *
+ * All methods transparently route to whichever backend is active. Redis values are
+ * JSON-serialised on write and deserialised on read; non-JSON strings are returned as-is.
+ */
 export class CacheManager {
+	/**
+	 * @param {Object} config
+	 * @param {string} [config.type='memory'] - Primary backend: `'redis'` or `'memory'`.
+	 * @param {string} [config.fallback='memory'] - Fallback backend when Redis is unavailable.
+	 * @param {string} [config.url] - Redis connection URL (required when `type` is `'redis'`).
+	 * @param {number} [config.maxSize=50000] - Max entries for the in-memory store.
+	 * @param {boolean} [config.flushOnStart] - Clear cache on bot startup.
+	 * @param {boolean} [config.flushOnShutdown] - Clear cache on bot shutdown.
+	 */
 	constructor(config) {
 		this.config = config;
 		this.type = config.type || 'memory';
@@ -14,6 +30,11 @@ export class CacheManager {
 		this.pipeline = null;
 	}
 
+	/**
+	 * Connects to Redis (if configured) and performs a ping to verify the connection.
+	 * Falls back to memory silently on failure.
+	 * @returns {Promise<this>}
+	 */
 	async init() {
 		if (this.type === 'redis' && this.config.url) {
 			try {
@@ -60,15 +81,14 @@ export class CacheManager {
 		}
 		return this;
 	}
-	/**
-	 * Sets a key-value pair in the cache with an optional TTL (time-to-live) in seconds.
-	 * If Redis is available and connected, it will use Redis; otherwise, it will fall back to memory storage.
-	 * @param {string} k - The key to set.
-	 * @param {any} v - The value to store.
-	 * @param {number} [ttl] - Optional TTL in seconds.
-	 *
-	 */
 
+	/**
+	 * Stores a key-value pair with an optional TTL.
+	 * @param {string} k
+	 * @param {*} v - Objects are JSON-serialised for Redis.
+	 * @param {number} [ttl] - Expiry in seconds.
+	 * @returns {Promise<boolean>} `false` if Redis write failed (value was saved to memory instead).
+	 */
 	async set(k, v, ttl) {
 		try {
 			if (this.useRedis && this.connected) {
@@ -88,6 +108,10 @@ export class CacheManager {
 		}
 	}
 
+	/**
+	 * Retrieves a value, deserialising JSON strings automatically.
+	 * @param {string} k @returns {Promise<*>} `null` if not found.
+	 */
 	async get(k) {
 		try {
 			if (this.useRedis && this.connected) {
@@ -106,6 +130,9 @@ export class CacheManager {
 		}
 	}
 
+	/**
+	 * @param {string} k @returns {Promise<boolean>}
+	 */
 	async has(k) {
 		try {
 			if (this.useRedis && this.connected) {
@@ -117,6 +144,10 @@ export class CacheManager {
 		}
 	}
 
+	/**
+	 * Deletes a key from both Redis and the in-memory store.
+	 * @param {string} k @returns {Promise<boolean>}
+	 */
 	async del(k) {
 		try {
 			if (this.useRedis && this.connected) {
@@ -130,6 +161,10 @@ export class CacheManager {
 		}
 	}
 
+	/**
+	 * Bulk-sets key-value pairs using a Redis pipeline for efficiency.
+	 * @param {Array<[string, *]>} arr @returns {Promise<boolean>}
+	 */
 	async mset(arr) {
 		try {
 			if (this.useRedis && this.connected) {
@@ -148,6 +183,10 @@ export class CacheManager {
 		}
 	}
 
+	/**
+	 * Bulk-gets values. Missing keys return `null`.
+	 * @param {string[]} keys @returns {Promise<Array<*>>}
+	 */
 	async mget(keys) {
 		try {
 			if (this.useRedis && this.connected) {
@@ -167,6 +206,10 @@ export class CacheManager {
 		}
 	}
 
+	/**
+	 * Bulk-deletes keys. No-ops if `keys` is empty.
+	 * @param {string[]} keys @returns {Promise<boolean>}
+	 */
 	async mdel(keys) {
 		try {
 			if (this.useRedis && this.connected) {
@@ -180,6 +223,10 @@ export class CacheManager {
 		}
 	}
 
+	/**
+	 * Atomically increments a numeric value by `d`. Initialises to `d` if absent.
+	 * @param {string} k @param {number} [d=1] @returns {Promise<number>} New value.
+	 */
 	async incr(k, d = 1) {
 		try {
 			if (this.useRedis && this.connected) {
@@ -191,6 +238,10 @@ export class CacheManager {
 		}
 	}
 
+	/**
+	 * Atomically decrements a numeric value by `d`.
+	 * @param {string} k @param {number} [d=1] @returns {Promise<number>} New value.
+	 */
 	async decr(k, d = 1) {
 		try {
 			if (this.useRedis && this.connected) {
@@ -202,6 +253,10 @@ export class CacheManager {
 		}
 	}
 
+	/**
+	 * Lists all keys matching a glob-style pattern.
+	 * @param {string} [pattern='*'] @returns {Promise<string[]>}
+	 */
 	async keys(pattern = '*') {
 		try {
 			if (this.useRedis && this.connected) {
@@ -213,6 +268,12 @@ export class CacheManager {
 		}
 	}
 
+	// ─── Hash operations ──────────────────────────────────────────────────────────
+
+	/**
+	 * Sets a field on a hash stored at `k`.
+	 * @param {string} k @param {string} f @param {*} v @returns {Promise<boolean>}
+	 */
 	async hset(k, f, v) {
 		try {
 			if (this.useRedis && this.connected) {
@@ -228,6 +289,10 @@ export class CacheManager {
 		}
 	}
 
+	/**
+	 * Gets a single field from a hash. Returns `null` if missing.
+	 * @param {string} k @param {string} f @returns {Promise<*>}
+	 */
 	async hget(k, f) {
 		try {
 			if (this.useRedis && this.connected) {
@@ -245,6 +310,10 @@ export class CacheManager {
 		}
 	}
 
+	/**
+	 * Deletes a field from a hash.
+	 * @param {string} k @param {string} f @returns {Promise<boolean>}
+	 */
 	async hdel(k, f) {
 		try {
 			if (this.useRedis && this.connected) {
@@ -258,6 +327,10 @@ export class CacheManager {
 		}
 	}
 
+	/**
+	 * Returns all fields and values of a hash. JSON fields are automatically deserialised.
+	 * @param {string} k @returns {Promise<Object>}
+	 */
 	async hgetall(k) {
 		try {
 			if (this.useRedis && this.connected) {
@@ -278,6 +351,10 @@ export class CacheManager {
 		}
 	}
 
+	/**
+	 * Merges multiple fields into a hash in a single call.
+	 * @param {string} k @param {Object} obj @returns {Promise<boolean>}
+	 */
 	async hmset(k, obj) {
 		try {
 			if (this.useRedis && this.connected) {
@@ -295,6 +372,10 @@ export class CacheManager {
 		}
 	}
 
+	/**
+	 * Atomically increments a numeric hash field.
+	 * @param {string} k @param {string} f @param {number} [d=1] @returns {Promise<number>}
+	 */
 	async hincrby(k, f, d = 1) {
 		try {
 			if (this.useRedis && this.connected) {
@@ -306,6 +387,12 @@ export class CacheManager {
 		}
 	}
 
+	// ─── Set operations ───────────────────────────────────────────────────────────
+
+	/**
+	 * Adds one or more members to the set at `k`.
+	 * @param {string} k @param {...*} members @returns {Promise<boolean>}
+	 */
 	async sadd(k, ...members) {
 		try {
 			if (this.useRedis && this.connected) {
@@ -319,6 +406,9 @@ export class CacheManager {
 		}
 	}
 
+	/**
+	 * @param {string} k @returns {Promise<Array<*>>}
+	 */
 	async smembers(k) {
 		try {
 			if (this.useRedis && this.connected) {
@@ -330,6 +420,9 @@ export class CacheManager {
 		}
 	}
 
+	/**
+	 * @param {string} k @param {*} m @returns {Promise<boolean>}
+	 */
 	async sismember(k, m) {
 		try {
 			if (this.useRedis && this.connected) {
@@ -341,6 +434,10 @@ export class CacheManager {
 		}
 	}
 
+	/**
+	 * Removes one or more members from the set at `k`.
+	 * @param {string} k @param {...*} members @returns {Promise<boolean>}
+	 */
 	async srem(k, ...members) {
 		try {
 			if (this.useRedis && this.connected) {
@@ -354,6 +451,12 @@ export class CacheManager {
 		}
 	}
 
+	// ─── List operations ──────────────────────────────────────────────────────────
+
+	/**
+	 * Prepends values to a list. Objects are JSON-serialised for Redis.
+	 * @param {string} k @param {...*} values @returns {Promise<number>} New list length.
+	 */
 	async lpush(k, ...values) {
 		try {
 			if (this.useRedis && this.connected) {
@@ -368,6 +471,10 @@ export class CacheManager {
 		}
 	}
 
+	/**
+	 * Appends values to a list. Objects are JSON-serialised for Redis.
+	 * @param {string} k @param {...*} values @returns {Promise<number>} New list length.
+	 */
 	async rpush(k, ...values) {
 		try {
 			if (this.useRedis && this.connected) {
@@ -382,6 +489,10 @@ export class CacheManager {
 		}
 	}
 
+	/**
+	 * Removes and returns the first element of a list.
+	 * @param {string} k @returns {Promise<*>} `null` if the list is empty or absent.
+	 */
 	async lpop(k) {
 		try {
 			if (this.useRedis && this.connected) {
@@ -399,6 +510,10 @@ export class CacheManager {
 		}
 	}
 
+	/**
+	 * Removes and returns the last element of a list.
+	 * @param {string} k @returns {Promise<*>} `null` if the list is empty or absent.
+	 */
 	async rpop(k) {
 		try {
 			if (this.useRedis && this.connected) {
@@ -416,6 +531,10 @@ export class CacheManager {
 		}
 	}
 
+	/**
+	 * Returns a slice of a list. JSON elements are automatically deserialised.
+	 * @param {string} k @param {number} start @param {number} stop @returns {Promise<Array<*>>}
+	 */
 	async lrange(k, start, stop) {
 		try {
 			if (this.useRedis && this.connected) {
@@ -434,6 +553,9 @@ export class CacheManager {
 		}
 	}
 
+	/**
+	 * @param {string} k @returns {Promise<number>} Length of the list, or 0 if absent.
+	 */
 	async llen(k) {
 		try {
 			if (this.useRedis && this.connected) {
@@ -445,6 +567,12 @@ export class CacheManager {
 		}
 	}
 
+	// ─── TTL / meta ───────────────────────────────────────────────────────────────
+
+	/**
+	 * Sets an expiry on a key. No-ops for the memory backend.
+	 * @param {string} k @param {number} seconds @returns {Promise<boolean>}
+	 */
 	async expire(k, seconds) {
 		try {
 			if (this.useRedis && this.connected) {
@@ -456,6 +584,10 @@ export class CacheManager {
 		}
 	}
 
+	/**
+	 * Returns remaining TTL in seconds. Returns `-1` if no expiry, or `-1` for memory backend.
+	 * @param {string} k @returns {Promise<number>}
+	 */
 	async ttl(k) {
 		try {
 			if (this.useRedis && this.connected) {
@@ -467,6 +599,10 @@ export class CacheManager {
 		}
 	}
 
+	/**
+	 * Returns the total number of keys in the active backend.
+	 * @returns {Promise<number>}
+	 */
 	async size() {
 		try {
 			if (this.useRedis && this.connected) {
@@ -478,6 +614,10 @@ export class CacheManager {
 		}
 	}
 
+	/**
+	 * Flushes all keys from both backends. Logs the action.
+	 * @returns {Promise<boolean>}
+	 */
 	async clear() {
 		try {
 			if (this.useRedis && this.connected) {
@@ -492,6 +632,10 @@ export class CacheManager {
 		}
 	}
 
+	/**
+	 * Measures Redis round-trip latency.
+	 * @returns {Promise<number>} Latency in ms, `0` if using memory, `-1` on error.
+	 */
 	async ping() {
 		try {
 			if (this.useRedis && this.connected) {
@@ -505,6 +649,10 @@ export class CacheManager {
 		}
 	}
 
+	/**
+	 * Gracefully closes the Redis connection and clears the in-memory store.
+	 * @returns {Promise<boolean>}
+	 */
 	async disconnect() {
 		try {
 			if (this.redis && this.connected) {
@@ -521,14 +669,22 @@ export class CacheManager {
 		}
 	}
 
+	// ─── State getters ────────────────────────────────────────────────────────────
+
+	/** `true` when Redis is the active backend. @type {boolean} */
 	get isRedis() {
 		return this.useRedis && this.connected;
 	}
 
+	/** `true` when the in-memory store is the active backend. @type {boolean} */
 	get isMemory() {
 		return !this.useRedis || !this.connected;
 	}
 
+	/**
+	 * Snapshot of the current backend state.
+	 * @type {{ type: 'redis'|'memory', connected: boolean, size: number }}
+	 */
 	get status() {
 		return {
 			type: this.isRedis ? 'redis' : 'memory',
