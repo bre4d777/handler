@@ -3,14 +3,25 @@ import { getDatabase } from '#db/drizzle';
 import { blacklist } from '#dbSchema/index';
 import { client } from '#src/bot';
 
+/** Cache TTL for blacklist entries (10 hours). */
 const CACHE_TTL = 36000;
 const CACHE_PREFIX = 'blacklist:';
 
+/**
+ * Data-access layer for the `blacklist` table.
+ * Uses a two-level cache: per-ID records and a boolean `exists` flag to avoid
+ * unnecessary DB queries in the hot path.
+ */
 export class BlacklistRepository {
 	constructor() {
 		this.db = getDatabase();
 	}
 
+	/**
+	 * Fetches a blacklist entry by ID. Returns the cached record if available.
+	 * @param {string} id - User or guild ID.
+	 * @returns {Promise<Object|null>} The entry row, or `null` if not found.
+	 */
 	async findById(id) {
 		if (!id) return null;
 
@@ -32,6 +43,12 @@ export class BlacklistRepository {
 		return result;
 	}
 
+	/**
+	 * Returns whether an ID is blacklisted. Caches the boolean result separately
+	 * from the full record to keep the hot-path lookup cheap.
+	 * @param {string} id
+	 * @returns {Promise<boolean>}
+	 */
 	async exists(id) {
 		if (!id) return false;
 
@@ -46,6 +63,12 @@ export class BlacklistRepository {
 		return result;
 	}
 
+	/**
+	 * Inserts a new blacklist entry and primes the per-ID and `exists` caches.
+	 * Also invalidates the all-entries and type list caches.
+	 * @param {{ id: string, type: string, [key: string]: any }} data
+	 * @returns {Promise<void>}
+	 */
 	async create(data) {
 		if (!data?.id) return;
 
@@ -58,6 +81,12 @@ export class BlacklistRepository {
 		]);
 	}
 
+	/**
+	 * Deletes an entry by ID and clears all caches related to it.
+	 * Fetches the entry first so the correct type list can be invalidated.
+	 * @param {string} id
+	 * @returns {Promise<void>}
+	 */
 	async delete(id) {
 		if (!id) return;
 
@@ -67,6 +96,10 @@ export class BlacklistRepository {
 		await this._invalidateCaches(id, entry?.type);
 	}
 
+	/**
+	 * Returns all blacklist entries. Cached for 10 minutes.
+	 * @returns {Promise<Object[]>}
+	 */
 	async findAll() {
 		const cacheKey = `${CACHE_PREFIX}all`;
 		const cached = await client.c.get(cacheKey);
@@ -78,6 +111,11 @@ export class BlacklistRepository {
 		return result;
 	}
 
+	/**
+	 * Returns all entries matching `type` (e.g. `'user'` or `'guild'`).
+	 * @param {string} type
+	 * @returns {Promise<Object[]>}
+	 */
 	async findByType(type) {
 		if (!type) return [];
 
@@ -91,6 +129,11 @@ export class BlacklistRepository {
 		return result;
 	}
 
+	/**
+	 * Deletes all entries of a given type and clears the entire blacklist cache namespace.
+	 * @param {string} type
+	 * @returns {Promise<void>}
+	 */
 	async deleteByType(type) {
 		if (!type) return;
 
@@ -98,6 +141,13 @@ export class BlacklistRepository {
 		await this._invalidateTypeCaches(type);
 	}
 
+	/**
+	 * Clears the per-ID record, the `exists` flag, the all-entries list,
+	 * and the type-scoped list for the given entry.
+	 * @param {string} id
+	 * @param {string} [type]
+	 * @returns {Promise<void>}
+	 */
 	async _invalidateCaches(id, type) {
 		const keys = [
 			`${CACHE_PREFIX}${id}`,
@@ -112,6 +162,12 @@ export class BlacklistRepository {
 		await client.c.mdel(keys);
 	}
 
+	/**
+	 * Clears the all-entries list and, optionally, a type-scoped list.
+	 * Called after inserting a new entry.
+	 * @param {string} [type]
+	 * @returns {Promise<void>}
+	 */
 	async _invalidateListCaches(type) {
 		const keys = [`${CACHE_PREFIX}all`];
 		if (type) {
@@ -120,6 +176,13 @@ export class BlacklistRepository {
 		await client.c.mdel(keys);
 	}
 
+	/**
+	 * Performs a full namespace flush by scanning for all keys matching the
+	 * blacklist prefix pattern and bulk-deleting them.
+	 * Used after a bulk type deletion where individual IDs are unknown.
+	 * @param {string} type - Unused directly, but signals a broad invalidation is needed.
+	 * @returns {Promise<void>}
+	 */
 	async _invalidateTypeCaches(type) {
 		const pattern = `${CACHE_PREFIX}*`;
 		const keys = await client.c.keys(pattern);
