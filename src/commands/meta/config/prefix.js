@@ -1,4 +1,4 @@
-import { Command } from '#structures/classes/Command';
+import { Command } from '#command';
 import {
 	PermissionFlagsBits,
 	MessageFlags,
