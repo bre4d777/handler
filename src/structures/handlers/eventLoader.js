@@ -153,6 +153,10 @@ export class EventLoader {
 			const event = module.default;
 			const handler = this.handlers.get(eventType);
 
+			// Defensive guard: loadEventsByType already verifies handler existence before
+			// calling recursiveLoadEvents → loadEventFile, so this branch is unreachable
+			// in normal operation. It is kept intentionally to protect against direct
+			// calls to loadEventFile that bypass that pre-check.
 			if (!handler) {
 				logger.warn('EventLoader', `No handler found for event type: ${eventType}`);
 				return;
