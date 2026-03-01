@@ -1,4 +1,5 @@
 import util from 'util';
+import { config as conf } from '#config';
 
 const config = {
 	logLevel: 'debug',
