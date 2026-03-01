@@ -490,16 +490,14 @@ export class Rei {
 		return this.$.size;
 	}
 
-	/** Clears all entries. @returns {this} */
+	/** Clears all entries. `@returns` {this} */
 	flushdb() {
-		this.$.clear();
-		return this;
+		return this.clear();
 	}
 
-	/** Clears all entries. @returns {this} */
+	/** Clears all entries. `@returns` {this} */
 	flushall() {
-		this.$.clear();
-		return this;
+		return this.clear();
 	}
 }
 
