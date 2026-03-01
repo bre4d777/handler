@@ -1,4 +1,4 @@
-import { Command } from '#structures/classes/Command';
+import { Command } from '#command';
 import {
 	MessageFlags,
 	ButtonStyle,
@@ -7,11 +7,10 @@ import {
 	ContainerBuilder,
 	TextDisplayBuilder,
 	SeparatorBuilder,
-	SeparatorSpacingSize,
-	SectionBuilder,
+	SeparatorSpacingSize
 } from 'discord.js';
-import { emoji } from '#config/emoji';
-import { config } from '#config/config';
+import { emoji } from '#emoji';
+import { config } from '#config';
 const { colors } = config;
 class InviteCommand extends Command {
 	constructor() {

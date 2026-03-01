@@ -16,6 +16,11 @@
   },
   "imports": {
     "#commands/*": "./src/commands/*.js",
+    "#command": "./src/structures/classes/command.js",
+    "#context": "./src/structures/classes/context.js",
+    "#config": "./src/config/config.js",
+    "#emoji": "./src/config/emoji.js",
+    "#dbManager": "./src/database/manager.js",
     "#structures/*": "./src/structures/*.js",
     "#database/*": "./src/database/*.js",
     "#config/*": "./src/config/*.js",

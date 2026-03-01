@@ -1,10 +1,10 @@
 import { REST } from '@discordjs/rest';
 import { Routes } from 'discord-api-types/v10';
 
-import { config } from '#config/config';
-import { Command } from '#structures/classes/Command';
+import { config } from '#config';
+import { Command } from '#command';
 import { logger } from '#utils';
-import emoji from '#config/emoji';
+import emoji from '#emoji';
 
 class UpdateSlashCommand extends Command {
 	constructor() {

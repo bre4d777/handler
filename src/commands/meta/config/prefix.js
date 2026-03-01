@@ -1,4 +1,4 @@
-import { Command } from '#structures/classes/Command';
+import { Command } from '#command';
 import {
 	PermissionFlagsBits,
 	MessageFlags,
@@ -13,13 +13,12 @@ import {
 	SeparatorBuilder,
 	SeparatorSpacingSize,
 } from 'discord.js';
-import { logger } from '#utils';
-import { db } from '#db/Manager';
-import { config } from '#config/config';
-import { emoji } from '#config/emoji';
+import { db } from '#dbManager';
+import { config } from '#config';
+import { emoji } from '#emoji';
 const { colors } = config;
 
-import { disableComponents } from '#utils';
+import { disableComponents, logger } from '#utils';
 
 class PrefixCommand extends Command {
 	constructor() {

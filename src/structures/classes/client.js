@@ -1,12 +1,18 @@
 import { REST } from '@discordjs/rest';
 import { Client, GatewayIntentBits, Options } from 'discord.js';
-import { config } from '#config/config';
-import { db } from '#db/Manager';
+import { config } from '#config';
+import { db } from '#dbManager';
 import { CommandHandler } from '#handlers/commandHandler';
 import { EventLoader } from '#handlers/eventLoader';
 import { logger } from '#utils';
-import { CacheManager } from '#classes/Cache';
+import { CacheManager } from '#classes/cache';
 
+/**
+ * Central bot client extending discord.js {@link Client}.
+ *
+ * Wires together the cache, database, command handler, and event loader,
+ * and exposes lifecycle methods for startup and teardown.
+ */
 export class Bot extends Client {
 	constructor() {
 		const clientOptions = {
@@ -85,18 +91,25 @@ export class Bot extends Client {
 			},
 		};
 
-
 		super(clientOptions);
 		this.cache = new CacheManager(config.cache);
+		/** Shorthand alias for {@link cache}. */
 		this.c = this.cache;
 		this.logger = logger;
 		this.config = config;
 		this.commandHandler = new CommandHandler(this);
 		this.eventHandler = new EventLoader(this);
 		this.rest = new REST({ version: '10' }).setToken(config.token);
+		/** Initialised during {@link init}. @type {import('#db/Manager').DatabaseManager|null} */
 		this.db = null;
 	}
 
+	/**
+	 * Bootstraps the bot: initialises the cache, database, events, commands, then logs in.
+	 * Optionally flushes the cache on startup depending on config.
+	 * @throws {Error} Re-throws any initialisation error after logging it.
+	 * @returns {Promise<void>}
+	 */
 	async init() {
 		try {
 			await this.c.init();
@@ -117,11 +130,15 @@ export class Bot extends Client {
 		}
 	}
 
+	/**
+	 * Gracefully shuts down the bot: flushes or disconnects the cache,
+	 * closes all database connections, and destroys the Discord client.
+	 * @throws {Error} Re-throws any cleanup error after logging it.
+	 * @returns {Promise<void>}
+	 */
 	async cleanup() {
 		this.logger.warn('Bot', 'Starting cleanup...');
 		try {
-			
-
 			if (this.config.cache.flushOnShutdown) {
 				await this.c.clear();
 				this.logger.info('Bot', 'Cache flushed on shutdown');

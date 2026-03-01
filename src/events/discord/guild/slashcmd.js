@@ -4,17 +4,13 @@ import {
 	TextDisplayBuilder,
 	SeparatorBuilder,
 	SeparatorSpacingSize,
-	MessageFlags,
-	ButtonBuilder,
-	ButtonStyle,
-	ActionRowBuilder,
+	MessageFlags
 } from 'discord.js';
-import { config } from '#config/config';
-import { logger } from '#utils';
-import { validateCommand, canBotSendMessages } from '#utils';
-import { CommandContext } from '#classes/context';
-import { db } from '#db/Manager';
-import { emoji } from '#config/emoji';
+import { config } from '#config'
+import { validateCommand, canBotSendMessages, logger } from '#utils';
+import { CommandContext } from '#context';
+import { db } from '#dbManager';
+import { emoji } from '#emoji';
 
 const errorContainer = new ContainerBuilder();
 const errorTitle = new TextDisplayBuilder();

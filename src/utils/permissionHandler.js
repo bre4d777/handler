@@ -1,8 +1,9 @@
 import { PermissionFlagsBits } from 'discord.js';
 import { config } from '#config/config';
-import { client } from '#src/bot';
 
 const ownerSet = new Set(config.ownerIds || []);
+
+/** Maps permission flag bigints to human-readable names (e.g. `SendMessages`). */
 const permissionNames = new Map();
 
 for (const [name, value] of Object.entries(PermissionFlagsBits)) {
@@ -16,8 +17,19 @@ for (const [name, value] of Object.entries(PermissionFlagsBits)) {
 	);
 }
 
+/**
+ * @param {string} userId
+ * @returns {boolean} `true` if the user is a bot owner.
+ */
 export const isOwner = (userId) => ownerSet.has(userId);
 
+/**
+ * Checks whether a guild member may execute a command based on owner-only
+ * status and required user permissions.
+ * @param {import('discord.js').GuildMember} member
+ * @param {import('#classes/Command').Command} command
+ * @returns {boolean}
+ */
 export const canUseCommand = (member, command) => {
 	if (!member || !member.permissions) return false;
 	if (command.ownerOnly && !ownerSet.has(member.id)) return false;
@@ -30,6 +42,13 @@ export const canUseCommand = (member, command) => {
 	return true;
 };
 
+/**
+ * Returns the human-readable names of any bot permissions missing in `channel`.
+ * Returns all permissions as missing if the bot member or channel permissions cannot be resolved.
+ * @param {import('discord.js').GuildChannel} channel
+ * @param {bigint[]} permissions
+ * @returns {string[]}
+ */
 export const getMissingBotPermissions = (channel, permissions) => {
 	if (!channel || !channel.guild || !channel.guild.members?.me || !permissions?.length) {
 		return permissions?.map((p) => permissionNames.get(p) || 'Unknown Permission') || [];
@@ -43,8 +62,8 @@ export const getMissingBotPermissions = (channel, permissions) => {
 
 		const missing = [];
 		for (const perm of permissions) {
-			if (!botPerms.has(p)) {
-				missing.push(permissionNames.get(p) || 'Unknown Permission');
+			if (!botPerms.has(perm)) {
+				missing.push(permissionNames.get(perm) || 'Unknown Permission');
 			}
 		}
 		return missing;
@@ -53,6 +72,11 @@ export const getMissingBotPermissions = (channel, permissions) => {
 	}
 };
 
+/**
+ * Returns `true` if the bot can send messages and view `channel`.
+ * @param {import('discord.js').GuildChannel} channel
+ * @returns {boolean}
+ */
 export const canBotSendMessages = (channel) => {
 	if (!channel || !channel.guild || !channel.guild.members?.me) return false;
 
@@ -69,6 +93,12 @@ export const canBotSendMessages = (channel) => {
 	}
 };
 
+/**
+ * Checks the bot's View, Connect, and Speak permissions in a voice channel.
+ * Returns all as `false` with a full missing list if permissions cannot be resolved.
+ * @param {import('discord.js').VoiceChannel} voiceChannel
+ * @returns {{ canView: boolean, canConnect: boolean, canSpeak: boolean, missing: string[] }}
+ */
 export const canBotUseVoiceChannel = (voiceChannel) => {
 	if (!voiceChannel || !voiceChannel.guild || !voiceChannel.guild.members?.me) {
 		return {
@@ -106,6 +136,11 @@ export const canBotUseVoiceChannel = (voiceChannel) => {
 	}
 };
 
+/**
+ * Returns the names of voice channel permissions the bot is missing (View, Connect, Speak).
+ * @param {import('discord.js').VoiceChannel} voiceChannel
+ * @returns {string[]}
+ */
 export const getVoiceChannelMissingPermissions = (voiceChannel) => {
 	if (!voiceChannel || !voiceChannel.guild || !voiceChannel.guild.members?.me) {
 		return ['View Channel', 'Connect', 'Speak'];
@@ -134,6 +169,11 @@ export const getVoiceChannelMissingPermissions = (voiceChannel) => {
 	}
 };
 
+/**
+ * Converts an array of permission flag bigints to a comma-separated string of names.
+ * @param {bigint[]} userPermissions
+ * @returns {string|null} `null` if the array is empty or absent.
+ */
 export const getUserPermissionsList = (userPermissions) =>
 	userPermissions?.length
 		? userPermissions
@@ -141,6 +181,14 @@ export const getUserPermissionsList = (userPermissions) =>
 				.join(', ')
 		: null;
 
+/**
+ * Runs all pre-execution checks for a command: context validity, bot send permissions,
+ * member fetch, maintenance/owner flags, user permissions, bot permissions,
+ * voice requirements, and same-voice-channel enforcement.
+ * @param {import('#classes/context').CommandContext} ctx
+ * @param {import('#classes/Command').Command} command
+ * @returns {Promise<{ valid: true } | { valid: false, error: { title: string, description: string }, cannotReply?: boolean }>}
+ */
 export const validateCommand = async (ctx, command) => {
 	if (!ctx || !command) {
 		return {
@@ -284,6 +332,14 @@ export const validateCommand = async (ctx, command) => {
 	return { valid: true };
 };
 
+/**
+ * Returns `true` if `member` is in the same voice channel as the bot.
+ * Also returns `true` if the bot has no voice channel and the member is in one
+ * (allows the bot to join freely).
+ * @param {import('discord.js').GuildMember} member
+ * @param {import('discord.js').Guild} guild
+ * @returns {boolean}
+ */
 export const inSameVoiceChannel = (member, guild) => {
 	if (!member || !guild || !guild.members?.me) return false;
 	if (!member.voice || !guild.members.me.voice) return false;
