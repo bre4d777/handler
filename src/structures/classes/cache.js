@@ -1,5 +1,5 @@
 import Redis from 'ioredis';
-import { Rei } from '#classes/rei';
+import { Rei, ReiT } from '#classes/rei';
 import { logger } from '#utils';
 
 /**
@@ -24,7 +24,7 @@ export class CacheManager {
 		this.type = config.type || 'memory';
 		this.fallbackType = config.fallback || 'memory';
 		this.redis = null;
-		this.memory = new Rei(config.maxSize || 50000);
+		this.memory = new ReiT(config.maxSize || 50000);
 		this.connected = false;
 		this.useRedis = false;
 		this.pipeline = null;
@@ -99,17 +99,45 @@ export class CacheManager {
 					await this.redis.set(k, val);
 				}
 			} else {
-				this.memory.set(k, v);
+				this.memory.set(k, v, ttl);
 			}
 			return true;
 		} catch (error) {
-			this.memory.set(k, v);
+			this.memory.set(k, v, ttl);
 			return false;
 		}
 	}
 
 	/**
-	 * Retrieves a value, deserialising JSON strings automatically.
+	 * Atomically sets a key only when it does not already exist, applying a TTL in the same step.
+	 *
+	 * - **Redis**: issues `SET key value NX EX ttl` which is a single atomic command.
+	 * - **Memory**: `has()` + `set()` is safe because Node.js is single-threaded;
+	 *   no other code can interleave between the two calls on the same microtask.
+	 *
+	 * @param {string} k
+	 * @param {*} v - Objects are JSON-serialised for Redis.
+	 * @param {number} ttl - Expiry in seconds.
+	 * @returns {Promise<boolean>} `true` if the key was set, `false` if it already existed.
+	 */
+	async setnxex(k, v, ttl) {
+		try {
+			if (this.useRedis && this.connected) {
+				const val = typeof v === 'object' ? JSON.stringify(v) : String(v);
+				const result = await this.redis.set(k, val, 'NX', 'EX', ttl);
+				return result === 'OK';
+			}
+			if (this.memory.has(k)) return false;
+			this.memory.set(k, v, ttl);
+			return true;
+		} catch {
+			if (this.memory.has(k)) return false;
+			this.memory.set(k, v, ttl);
+			return true;
+		}
+	}
+
+	/**
 	 * @param {string} k @returns {Promise<*>} `null` if not found.
 	 */
 	async get(k) {
@@ -570,7 +598,8 @@ export class CacheManager {
 	// ─── TTL / meta ───────────────────────────────────────────────────────────────
 
 	/**
-	 * Sets an expiry on a key. No-ops for the memory backend.
+	 * Sets an expiry on a key.
+	 * Delegates to the memory backend (ReiT) when Redis is unavailable.
 	 * @param {string} k @param {number} seconds @returns {Promise<boolean>}
 	 */
 	async expire(k, seconds) {
@@ -578,14 +607,17 @@ export class CacheManager {
 			if (this.useRedis && this.connected) {
 				return (await this.redis.expire(k, seconds)) === 1;
 			}
-			return false;
+			this.memory.expire(k, seconds);
+			return true;
 		} catch {
 			return false;
 		}
 	}
 
 	/**
-	 * Returns remaining TTL in seconds. Returns `-1` if no expiry, or `-1` for memory backend.
+	 * Returns remaining TTL in seconds.
+	 * Delegates to the memory backend (ReiT.ttl()) when Redis is unavailable.
+	 * Returns `-1` if no expiry is set, `-2` if the key has already expired.
 	 * @param {string} k @returns {Promise<number>}
 	 */
 	async ttl(k) {
@@ -593,7 +625,7 @@ export class CacheManager {
 			if (this.useRedis && this.connected) {
 				return await this.redis.ttl(k);
 			}
-			return -1;
+			return this.memory.ttl(k);
 		} catch {
 			return -1;
 		}
