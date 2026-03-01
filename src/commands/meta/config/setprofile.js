@@ -31,8 +31,6 @@ class SetProfileCommand extends Command {
 			usage: 'setprofile',
 			aliases: ['botprofile'],
 			cooldown: 600,
-			ownerOnly: false,
-			guildPremium: true,
 			userPermissions: [PermissionFlagsBits.ManageGuild],
 			enabledSlash: true,
 			slashData: {

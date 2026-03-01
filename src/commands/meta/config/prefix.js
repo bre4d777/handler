@@ -32,7 +32,6 @@ class PrefixCommand extends Command {
 			cooldown: 120,
 			examples: ['prefix', 'prefix add', 'prefix remove'],
 			userPermissions: [PermissionFlagsBits.ManageGuild],
-			voteOnly: true,
 			enabledSlash: true,
 			slashData: {
 				name: 'prefix',
