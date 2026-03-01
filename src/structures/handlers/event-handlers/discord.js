@@ -8,7 +8,13 @@ export default class DiscordHandler {
 	/** @param {import('#classes/client').Bot} client */
 	constructor(client) {
 		this.client = client;
-		/** @type {Map<string, Function>} Event name → bound listener function. */
+		/**
+		 * @type {Map<string, Set<Function>>}
+		 * Event name → set of bound listener functions.
+		 * A Set (rather than a single Function) is used so that multiple listeners
+		 * for the same event name can coexist and be individually removed without
+		 * earlier registrations being silently overwritten.
+		 */
 		this.registeredEvents = new Map();
 	}
 
@@ -20,9 +26,9 @@ export default class DiscordHandler {
 	 */
 	async register(event) {
 		try {
-			const listener = (...args) => {
+			const listener = async (...args) => {
 				try {
-					event.execute({ eventArgs: args, client: this.client });
+					await event.execute({ eventArgs: args, client: this.client });
 				} catch (error) {
 					logger.error('DiscordEvent', `Error in Discord event ${event.name}:`, error);
 				}
@@ -34,7 +40,10 @@ export default class DiscordHandler {
 				this.client.on(event.name, listener);
 			}
 
-			this.registeredEvents.set(event.name, listener);
+			if (!this.registeredEvents.has(event.name)) {
+				this.registeredEvents.set(event.name, new Set());
+			}
+			this.registeredEvents.get(event.name).add(listener);
 			return true;
 		} catch (error) {
 			logger.error(
@@ -47,14 +56,17 @@ export default class DiscordHandler {
 	}
 
 	/**
-	 * Removes the listener for a specific event name and forgets it.
+	 * Removes all listeners for a specific event name and forgets them.
 	 * No-ops if the event was never registered.
 	 * @param {string} eventName
 	 * @returns {Promise<void>}
 	 */
 	async unregister(eventName) {
-		if (this.registeredEvents.has(eventName)) {
-			this.client.removeListener(eventName, this.registeredEvents.get(eventName));
+		const listeners = this.registeredEvents.get(eventName);
+		if (listeners) {
+			for (const listener of listeners) {
+				this.client.removeListener(eventName, listener);
+			}
 			this.registeredEvents.delete(eventName);
 		}
 	}
@@ -64,8 +76,10 @@ export default class DiscordHandler {
 	 * @returns {Promise<void>}
 	 */
 	async unregisterAll() {
-		for (const [eventName, listener] of this.registeredEvents) {
-			this.client.removeListener(eventName, listener);
+		for (const [eventName, listeners] of this.registeredEvents) {
+			for (const listener of listeners) {
+				this.client.removeListener(eventName, listener);
+			}
 		}
 		this.registeredEvents.clear();
 	}
