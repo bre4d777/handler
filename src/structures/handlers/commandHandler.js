@@ -97,6 +97,7 @@ export class CommandHandler {
 			await Promise.all(loadPromises);
 		} catch (error) {
 			logger.error('CommandHandler', `Failed to read directory: ${dirPath}`, error);
+			throw error;
 		}
 	}
 
@@ -293,7 +294,7 @@ export class CommandHandler {
 	}
 
 	/**
-	 * Writes a cooldown entry to cache. Premium users receive half the normal cooldown.
+	 * Writes a cooldown entry to cache.
 	 * Also clears any existing cooldown-notified flag so the user can be notified again.
 	 * @param {import('#classes/Command').Command} command
 	 * @param {string} userId
@@ -402,8 +403,11 @@ export class CommandHandler {
 	}
 
 	/**
-	 * Atomically checks and sets a button cooldown.
-	 * Returns the remaining cooldown if already active, or `null` and sets a new cooldown.
+	 * Atomically checks and sets a button cooldown in a single cache operation.
+	 * Uses SET NX EX (Redis) or an equivalent single-step primitive (memory) so
+	 * there is no read-then-write race between the existence check and the write.
+	 * Returns the remaining cooldown if already active, or `null` when a fresh
+	 * cooldown was successfully installed.
 	 * @param {string} customId
 	 * @param {string} userId
 	 * @param {string} guildId
@@ -411,9 +415,14 @@ export class CommandHandler {
 	 * @returns {Promise<number|null>}
 	 */
 	async checkAndSetButtonCooldown(customId, userId, guildId, ms = BTN_COOLDOWN_MS) {
-		const remaining = await this.isButtonOnCooldown(customId, userId, guildId);
-		if (remaining) return remaining;
-		await this.setButtonCooldown(customId, userId, guildId, ms);
-		return null;
+		const key = `cd:btn:${customId}:${userId}:${guildId}`;
+		const ttlSeconds = Math.ceil(ms / 1000) + 1;
+		const expiry = Date.now() + ms;
+		const wasSet = await this.client.c.setnxex(key, expiry, ttlSeconds);
+		if (wasSet) return null;
+		const val = await this.client.c.get(key);
+		if (!val) return null;
+		const remaining = val - Date.now();
+		return remaining > 0 ? remaining : null;
 	}
 }
