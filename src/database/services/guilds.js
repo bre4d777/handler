@@ -1,9 +1,6 @@
 import { GuildRepository } from '#dbRepo/guilds';
 import { config } from '#config/config';
 import { logger } from '#utils';
-import { client } from '#src/bot';
-import { PlayerManager } from '#classes/player';
-import { db } from '#db/Manager';
 
 export class GuildService {
 	constructor() {
