@@ -2,7 +2,7 @@ import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
 import * as schema from '#dbSchema/index';
 import { logger } from '#utils';
-import { config } from '#config/config';
+import { config } from '#config';
 
 /** Singleton Drizzle ORM instance. */
 let db = null;

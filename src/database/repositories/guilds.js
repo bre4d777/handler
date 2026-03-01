@@ -1,7 +1,7 @@
 import { eq, sql } from 'drizzle-orm';
 import { getDatabase } from '#db/drizzle';
 import { guilds } from '#dbSchema/index';
-import { config } from '#config/config';
+import { config } from '#config';
 import { client } from '#src/bot';
 
 /** Cache TTL for individual guild records (5 hours). */

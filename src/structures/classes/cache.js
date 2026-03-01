@@ -1,5 +1,5 @@
 import Redis from 'ioredis';
-import { Rei } from '#classes/Rei';
+import { Rei } from '#classes/rei';
 import { logger } from '#utils';
 
 /**

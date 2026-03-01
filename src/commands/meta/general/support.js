@@ -1,4 +1,4 @@
-import { Command } from '#structures/classes/Command';
+import { Command } from '#command';
 import {
 	MessageFlags,
 	ButtonStyle,
@@ -9,8 +9,8 @@ import {
 	SeparatorSpacingSize,
 	SectionBuilder,
 } from 'discord.js';
-import { emoji } from '#config/emoji';
-import { config } from '#config/config';
+import { emoji } from '#emoji';
+import { config } from '#config';
 
 class SupportCommand extends Command {
 	constructor() {

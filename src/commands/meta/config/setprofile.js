@@ -14,12 +14,12 @@ import {
 	TextInputStyle,
 	FileUploadBuilder,
 	LabelBuilder,
-	SectionBuilder,
+	SectionBuilder
 } from 'discord.js';
 import { REST } from '@discordjs/rest';
-import { db } from '#db/Manager';
-import { config } from '#config/config';
-import { emoji } from '#config/emoji';
+import { db } from '#dbManager';
+import { config } from '#config';
+import { emoji } from '#emoji';
 const { colors } = config;
 import { disableComponents } from '#utils';
 

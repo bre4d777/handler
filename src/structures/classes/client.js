@@ -1,11 +1,11 @@
 import { REST } from '@discordjs/rest';
 import { Client, GatewayIntentBits, Options } from 'discord.js';
-import { config } from '#config/config';
-import { db } from '#db/Manager';
+import { config } from '#config';
+import { db } from '#dbManager';
 import { CommandHandler } from '#handlers/commandHandler';
 import { EventLoader } from '#handlers/eventLoader';
 import { logger } from '#utils';
-import { CacheManager } from '#classes/Cache';
+import { CacheManager } from '#classes/cache';
 
 /**
  * Central bot client extending discord.js {@link Client}.

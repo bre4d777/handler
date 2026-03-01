@@ -12,13 +12,12 @@ import {
 	ChannelSelectMenuBuilder,
 	ChannelType,
 } from 'discord.js';
-import { logger } from '#utils';
-import { db } from '#db/Manager';
-import { emoji } from '#config/emoji';
-import { config } from '#config/config';
+import { db } from '#dbManager';
+import { emoji } from '#emoji';
+import { config } from '#config';
 const { colors } = config;
 
-import { disableComponents } from '#utils';
+import { disableComponents, logger } from '#utils';
 
 class IgnoreCommand extends Command {
 	constructor() {

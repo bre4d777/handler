@@ -8,12 +8,11 @@ import {
 	SeparatorSpacingSize,
 	ActionRowBuilder,
 } from 'discord.js';
-import { logger } from '#utils';
-import { db } from '#db/Manager';
-import { config } from '#config/config';
-import { validateCommand, canBotSendMessages } from '#utils';
-import { CommandContext } from '#classes/context';
-import { emoji } from '#config/emoji';
+import { config } from '#config';
+import { db } from '#dbManager';
+import { CommandContext } from '#context';
+import { validateCommand, canBotSendMessages, logger } from '#utils';
+import { emoji } from '#emoji';
 
 const CUSTOM_PREFIXES = {
 	GLOBAL: ['eleven'],

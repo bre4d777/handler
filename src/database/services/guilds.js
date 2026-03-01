@@ -1,5 +1,5 @@
 import { GuildRepository } from '#dbRepo/guilds';
-import { config } from '#config/config';
+import { config } from '#config';
 import { logger } from '#utils';
 
 /**

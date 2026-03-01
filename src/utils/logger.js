@@ -1,10 +1,4 @@
 import util from 'util';
-import {
-	ContainerBuilder,
-	TextDisplayBuilder,
-	SeparatorBuilder,
-	SeparatorSpacingSize,
-} from 'discord.js';
 
 const config = {
 	logLevel: 'debug',

@@ -1,7 +1,7 @@
-import { Command } from '#structures/classes/Command';
+import { Command } from '#command';
 import { logger } from '#utils';
-import emoji from '#config/emoji';
-import { db } from '#db/Manager';
+import emoji from '#emoji';
+import { db } from '#dbManager';
 
 class BlacklistCommand extends Command {
 	constructor() {

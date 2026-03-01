@@ -2,7 +2,6 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { logger } from '#utils';
-import { db } from '#db/Manager';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -306,12 +305,7 @@ export class CommandHandler {
 			? command.name.join(':').toLowerCase()
 			: command.name.toLowerCase();
 
-		let cooldown;
-		if (await db.premium.checkAnyPremium(guildId, userId)) {
-			cooldown = command.cooldown / 2;
-		} else {
-			cooldown = command.cooldown;
-		}
+		const	cooldown = command.cooldown;
 
 		if (cooldown) {
 			const cooldownKey = `cd:${commandKey}:${userId}:${guildId}`;

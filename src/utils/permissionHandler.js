@@ -1,6 +1,5 @@
 import { PermissionFlagsBits } from 'discord.js';
 import { config } from '#config/config';
-import { client } from '#src/bot';
 
 const ownerSet = new Set(config.ownerIds || []);
 
