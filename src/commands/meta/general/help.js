@@ -186,21 +186,36 @@ class HelpCommand extends Command {
 		);
 
 		const catNames = Object.keys(categories).sort();
-		const catOptions = catNames.map((name) =>
-			new StringSelectMenuOptionBuilder()
-				.setLabel(this._formatCatName(name))
-				.setValue(name)
-				.setDefault(name === selectedCat),
-		);
 
-		container.addActionRowComponents(
-			new ActionRowBuilder().addComponents(
-				new StringSelectMenuBuilder()
-					.setCustomId('hcatsel|_|_')
-					.setPlaceholder('Select a category...')
-					.addOptions(catOptions),
-			),
-		);
+		if (catNames.length === 0) {
+				container.addTextDisplayComponents(
+						new TextDisplayBuilder().setContent('-# No categories available.'),
+				);
+		} else {
+				const chunks = [];
+				for (let i = 0; i < catNames.length; i += 25) {
+						chunks.push(catNames.slice(i, i + 25));
+				}
+
+				for (let ci = 0; ci < chunks.length; ci++) {
+						const chunk = chunks[ci];
+						const catOptions = chunk.map((name) =>
+								new StringSelectMenuOptionBuilder()
+										.setLabel(this._formatCatName(name))
+										.setValue(name)
+										.setDefault(name === selectedCat),
+						);
+
+						container.addActionRowComponents(
+								new ActionRowBuilder().addComponents(
+										new StringSelectMenuBuilder()
+												.setCustomId(`hcatsel|${ci}|_`)
+												.setPlaceholder(chunks.length > 1 ? `Categories (${ci + 1}/${chunks.length})` : 'Select a category...')
+												.addOptions(catOptions),
+								),
+						);
+				}
+		}
 
 		if (selectedCat && categories[selectedCat]) {
 			container.addSeparatorComponents(
