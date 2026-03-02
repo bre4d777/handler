@@ -50,7 +50,8 @@ class HelpCommand extends Command {
 
 		if (arg) {
 			const command = this._findCommand(ctx.client, arg);
-			if (!command) {
+			const hidden = command?.category?.toLowerCase().includes('dev');
+			if (!command || hidden) {
 				const container = new ContainerBuilder();
 				container.setAccentColor(colors.error ?? 0xff4444);
 				container.addTextDisplayComponents(
@@ -108,10 +109,10 @@ class HelpCommand extends Command {
 			time: 600_000,
 			filter: (i) => {
 				if (i.user.id !== ctx.author.id) {
-					i.reply({
+					void i.reply({
 						content: `${emoji.cross} Not your command.`,
 						flags: MessageFlags.Ephemeral,
-					});
+					}).catch(() => {});
 					return false;
 				}
 				return true;
@@ -131,18 +132,6 @@ class HelpCommand extends Command {
 
 				if (action === 'hpage') {
 					const container = this._buildMainView(ctx.client, p1, parseInt(p2));
-					await message.edit({ components: [container] });
-					return;
-				}
-
-				if (action === 'hcmd') {
-					const command = this._findCommand(ctx.client, p1);
-					if (!command) return;
-					const container = this._buildDetailsView(
-						command,
-						p2 || null,
-						parseInt(p1) || 0,
-					);
 					await message.edit({ components: [container] });
 					return;
 				}
@@ -377,7 +366,8 @@ class HelpCommand extends Command {
 		const aliasTarget = client.commandHandler.aliases.get(normalized);
 		if (aliasTarget) {
 			cmd = client.commandHandler.commands.get(aliasTarget);
-			if (cmd) return cmd;
+			const hidden = cmd?.category?.toLowerCase().includes('dev')
+			if (cmd && !hidden) return cmd;
 		}
 
 		for (const c of client.commandHandler.commands.values()) {

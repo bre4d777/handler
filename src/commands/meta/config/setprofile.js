@@ -27,7 +27,7 @@ class SetProfileCommand extends Command {
 	constructor() {
 		super({
 			name: 'setprofile',
-			description: "Customize bot's server profile ",
+			description: "Customize bot's server profile",
 			usage: 'setprofile',
 			aliases: ['botprofile'],
 			cooldown: 600,
