@@ -306,7 +306,7 @@ export class CommandHandler {
 			? command.name.join(':').toLowerCase()
 			: command.name.toLowerCase();
 
-		const	cooldown = command.cooldown;
+		const cooldown = command.cooldown;
 
 		if (cooldown) {
 			const cooldownKey = `cd:${commandKey}:${userId}:${guildId}`;

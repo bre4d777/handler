@@ -15,7 +15,7 @@ import { validateCommand, canBotSendMessages, logger } from '#utils';
 import { emoji } from '#emoji';
 
 const CUSTOM_PREFIXES = {
-	GLOBAL: ['eleven'],
+	GLOBAL: ['bot'],
 	USER_SPECIFIC: {
 		'931059762173464597': ['qt', 'cutie', 'baccha'],
 		'937380760875302974': ['qt', 'aye'],
@@ -114,7 +114,7 @@ const sendCooldown = async (cooldown, message) => {
 	try {
 		const timestamp = Math.floor((Date.now() + cooldown) / 1000);
 		let content = `**Cooldown** - Ends <t:${timestamp}:R>`;
-	
+
 		const cooldownContainer = new ContainerBuilder();
 		cooldownContainer.setAccentColor(config.colors?.warn || 0xfee75c);
 		cooldownContainer.addTextDisplayComponents(
@@ -213,12 +213,12 @@ const handleMentionOnly = async (message, client, guildPrefixes) => {
 		if (!canBotSendMessages(message.channel)) return true;
 
 		mentionContainer.components.length = 0;
-		mentionContainer.setAccentColor(config.colors?.eleven || 0x5865f2);
+		mentionContainer.setAccentColor(config.colors?.bot || 0x5865f2);
 		mentionTitle.data.content = `## ${client.user.username}`;
 		mentionContent.data.content =
 			`${emoji?.code || '📝'} **Server Prefixes**\n\n` +
 			`-# ${guildPrefixes.map((p) => `\`${p}\``).join(' • ')}` +
-			`\n\n-# Use \`${guildPrefixes[0]}help\` for commands\n-# Use \`${guildPrefixes[0]}play <query>\` to start playing a song`;
+			`\n\n-# Use \`${guildPrefixes[0]}help\` for commands\n`;
 		mentionContainer
 			.addTextDisplayComponents(mentionTitle)
 			.addSeparatorComponents(mentionSeparator)
@@ -304,7 +304,6 @@ export default {
 
 			if (isUserBlacklisted || isGuildBlacklisted) return;
 
-		
 			if (await handleMentionOnly(message, client, guildPrefixes)) return;
 
 			const commandInfo = await parseCommand(message, client, guildPrefixes);
@@ -354,7 +353,6 @@ export default {
 				return;
 			}
 
-			
 			if (command.cooldown && client.commandHandler) {
 				try {
 					const cooldown = await client.commandHandler.isOnCooldown(

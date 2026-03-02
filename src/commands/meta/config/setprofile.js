@@ -14,7 +14,7 @@ import {
 	TextInputStyle,
 	FileUploadBuilder,
 	LabelBuilder,
-	SectionBuilder
+	SectionBuilder,
 } from 'discord.js';
 import { REST } from '@discordjs/rest';
 import { db } from '#dbManager';
@@ -27,7 +27,7 @@ class SetProfileCommand extends Command {
 	constructor() {
 		super({
 			name: 'setprofile',
-			description: "Customize bot's server profile (Premium Only)",
+			description: "Customize bot's server profile",
 			usage: 'setprofile',
 			aliases: ['botprofile'],
 			cooldown: 600,
@@ -35,7 +35,7 @@ class SetProfileCommand extends Command {
 			enabledSlash: true,
 			slashData: {
 				name: 'setprofile',
-				description: "Customize bot's server profile (Premium Only)",
+				description: "Customize bot's server profile",
 				defaultMemberPermissions: PermissionFlagsBits.ManageGuild,
 			},
 		});
@@ -124,7 +124,7 @@ class SetProfileCommand extends Command {
 	async _buildHome(guildId) {
 		const isCustomProfile = await db.guild.getCustomProfileStatus(guildId);
 		const container = new ContainerBuilder();
-		container.setAccentColor(colors.eleven);
+		container.setAccentColor(colors.bot);
 		container.addTextDisplayComponents(
 			new TextDisplayBuilder().setContent('## Bot Profile Customization'),
 		);

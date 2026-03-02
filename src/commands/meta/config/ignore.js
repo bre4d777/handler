@@ -59,7 +59,7 @@ class IgnoreCommand extends Command {
 
 	_renderIgnoreEditor(ctx, ignored, feedback = null) {
 		const container = new ContainerBuilder();
-		container.setAccentColor(colors.eleven);
+		container.setAccentColor(colors.bot);
 
 		const preview =
 			ignored.length > 0

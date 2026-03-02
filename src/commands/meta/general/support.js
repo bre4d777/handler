@@ -36,7 +36,7 @@ class SupportCommand extends Command {
 
 	_view() {
 		const container = new ContainerBuilder();
-		container.setAccentColor(config.colors.eleven);
+		container.setAccentColor(config.colors.bot);
 		container.addTextDisplayComponents(
 			new TextDisplayBuilder().setContent(`### Support Server`),
 		);
