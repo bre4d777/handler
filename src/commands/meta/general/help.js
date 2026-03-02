@@ -44,7 +44,9 @@ class HelpCommand extends Command {
 	}
 
 	async execute({ ctx }) {
-		const arg = ctx.isSlash ? ctx.options?.getString('command') : ctx.args.join(' ').trim();
+		const arg = ctx.isSlash
+			? ctx.options?.getString('command')
+			: ctx.args.join(' ').trim();
 
 		if (arg) {
 			const command = this._findCommand(ctx.client, arg);
@@ -136,7 +138,11 @@ class HelpCommand extends Command {
 				if (action === 'hcmd') {
 					const command = this._findCommand(ctx.client, p1);
 					if (!command) return;
-					const container = this._buildDetailsView(command, p2 || null, parseInt(p1) || 0);
+					const container = this._buildDetailsView(
+						command,
+						p2 || null,
+						parseInt(p1) || 0,
+					);
 					await message.edit({ components: [container] });
 					return;
 				}
@@ -215,10 +221,16 @@ class HelpCommand extends Command {
 			const cmds = categories[selectedCat];
 			const totalPages = Math.ceil(cmds.length / CMDS_PER_PAGE);
 			const safePage = Math.max(0, Math.min(page, totalPages - 1));
-			const pageCmds = cmds.slice(safePage * CMDS_PER_PAGE, safePage * CMDS_PER_PAGE + CMDS_PER_PAGE);
+			const pageCmds = cmds.slice(
+				safePage * CMDS_PER_PAGE,
+				safePage * CMDS_PER_PAGE + CMDS_PER_PAGE,
+			);
 
 			const listText = pageCmds
-				.map((cmd) => `* **${this._cmdDisplay(cmd)}** — ${this._trunc(cmd.description || 'No description', 55)}`)
+				.map(
+					(cmd) =>
+						`* **${this._cmdDisplay(cmd)}** — ${this._trunc(cmd.description || 'No description', 55)}`,
+				)
 				.join('\n');
 
 			container.addTextDisplayComponents(
@@ -288,9 +300,13 @@ class HelpCommand extends Command {
 		if (command.examples?.length)
 			lines.push(`* **Examples:** ${command.examples.map((e) => `\`${e}\``).join(', ')}`);
 		if (command.userPermissions?.length)
-			lines.push(`* **User Perms:** ${command.userPermissions.map((p) => this._formatPerm(p)).join(', ')}`);
+			lines.push(
+				`* **User Perms:** ${command.userPermissions.map((p) => this._formatPerm(p)).join(', ')}`,
+			);
 		if (command.permissions?.length)
-			lines.push(`* **Bot Perms:** ${command.permissions.map((p) => this._formatPerm(p)).join(', ')}`);
+			lines.push(
+				`* **Bot Perms:** ${command.permissions.map((p) => this._formatPerm(p)).join(', ')}`,
+			);
 		if (command.enabledSlash && command.slashData) {
 			const slashName = Array.isArray(command.slashData.name)
 				? `/${command.slashData.name.join(' ')}`
@@ -298,7 +314,9 @@ class HelpCommand extends Command {
 			lines.push(`* **Slash:** \`${slashName}\``);
 		}
 
-		container.addTextDisplayComponents(new TextDisplayBuilder().setContent(lines.join('\n')));
+		container.addTextDisplayComponents(
+			new TextDisplayBuilder().setContent(lines.join('\n')),
+		);
 
 		if (fromCat) {
 			container.addSeparatorComponents(
@@ -376,7 +394,9 @@ class HelpCommand extends Command {
 	}
 
 	_cmdKey(cmd) {
-		return Array.isArray(cmd.name) ? cmd.name.join(':').toLowerCase() : cmd.name.toLowerCase();
+		return Array.isArray(cmd.name)
+			? cmd.name.join(':').toLowerCase()
+			: cmd.name.toLowerCase();
 	}
 
 	_cmdDisplay(cmd) {

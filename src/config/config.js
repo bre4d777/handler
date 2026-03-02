@@ -9,7 +9,7 @@ const isProduction = environment === 'production';
 const commonConfig = {
 	prefix: '.',
 	ownerIds: ['931059762173464597'],
-	
+
 	colors: {
 		bot: [214, 211, 203],
 		error: [230, 190, 175],
@@ -20,7 +20,7 @@ const commonConfig = {
 		supportServer: 'https://discord.gg/Ez4gCJQDxB',
 		invite:
 			'https://discord.com/oauth2/authorize?client_id=1277525844319014955&permissions=4820258979704064&integration_type=0&scope=bot+applications.commands',
-		},
+	},
 	watermark: 'coded by bre4d',
 	version: '2.0.0',
 };

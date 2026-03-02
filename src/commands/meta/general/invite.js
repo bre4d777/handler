@@ -7,7 +7,7 @@ import {
 	ContainerBuilder,
 	TextDisplayBuilder,
 	SeparatorBuilder,
-	SeparatorSpacingSize
+	SeparatorSpacingSize,
 } from 'discord.js';
 import { emoji } from '#emoji';
 import { config } from '#config';

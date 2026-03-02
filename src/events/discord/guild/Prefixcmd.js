@@ -114,7 +114,7 @@ const sendCooldown = async (cooldown, message) => {
 	try {
 		const timestamp = Math.floor((Date.now() + cooldown) / 1000);
 		let content = `**Cooldown** - Ends <t:${timestamp}:R>`;
-	
+
 		const cooldownContainer = new ContainerBuilder();
 		cooldownContainer.setAccentColor(config.colors?.warn || 0xfee75c);
 		cooldownContainer.addTextDisplayComponents(
@@ -304,7 +304,6 @@ export default {
 
 			if (isUserBlacklisted || isGuildBlacklisted) return;
 
-		
 			if (await handleMentionOnly(message, client, guildPrefixes)) return;
 
 			const commandInfo = await parseCommand(message, client, guildPrefixes);
@@ -354,7 +353,6 @@ export default {
 				return;
 			}
 
-			
 			if (command.cooldown && client.commandHandler) {
 				try {
 					const cooldown = await client.commandHandler.isOnCooldown(

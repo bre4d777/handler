@@ -4,9 +4,9 @@ import {
 	TextDisplayBuilder,
 	SeparatorBuilder,
 	SeparatorSpacingSize,
-	MessageFlags
+	MessageFlags,
 } from 'discord.js';
-import { config } from '#config'
+import { config } from '#config';
 import { validateCommand, canBotSendMessages, logger } from '#utils';
 import { CommandContext } from '#context';
 import { db } from '#dbManager';
@@ -18,7 +18,6 @@ const errorSeparator = new SeparatorBuilder()
 	.setSpacing(SeparatorSpacingSize.Small)
 	.setDivider(true);
 const errorDescription = new TextDisplayBuilder();
-
 
 const sendError = async (interaction, title, description, forceEphemeral = false) => {
 	if (!interaction || !title || !description) return;
@@ -56,9 +55,9 @@ const sendCooldown = async (interaction, cooldown) => {
 
 	try {
 		const timestamp = Math.floor((Date.now() + cooldown) / 1000);
-		
+
 		let content = `**Cooldown** - Ends <t:${timestamp}:R>`;
-		
+
 		const cooldownContainer = new ContainerBuilder();
 		cooldownContainer.setAccentColor(config.colors?.warn || 0xfee75c);
 		cooldownContainer.addTextDisplayComponents(
@@ -169,7 +168,6 @@ const handleChatInputCommand = async (interaction, client) => {
 				.catch(() => {});
 		}
 
-
 		const commandToExecute = getCommandFile(interaction, client);
 		if (!commandToExecute) {
 			logger.warn(
@@ -183,7 +181,6 @@ const handleChatInputCommand = async (interaction, client) => {
 				true,
 			);
 		}
-
 
 		if (commandToExecute.cooldown && client.commandHandler) {
 			try {

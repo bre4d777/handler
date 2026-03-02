@@ -14,7 +14,7 @@ import {
 	TextInputStyle,
 	FileUploadBuilder,
 	LabelBuilder,
-	SectionBuilder
+	SectionBuilder,
 } from 'discord.js';
 import { REST } from '@discordjs/rest';
 import { db } from '#dbManager';
