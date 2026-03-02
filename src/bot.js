@@ -2,8 +2,11 @@ import { Bot } from '#classes/client';
 import { logger } from '#utils';
 
 const client = new Bot();
-
+let isShuttingDown = false;
+ 
 const shutdown = async (signal) => {
+	if (isShuttingDown) return;
+  isShuttingDown = true;
 	logger.info('Shutdown', `Received ${signal}, shutting down gracefully`);
 	try {
 		await client.cleanup();
@@ -23,8 +26,8 @@ process.on('uncaughtException', (error, origin) => {
 	logger.error('Process', `Uncaught Exception at ${origin}:`, error);
 });
 
-process.on('SIGINT', () => shutdown('SIGINT'));
-process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGINT', () => void shutdown('SIGINT'));
+process.on('SIGTERM', () => void shutdown('SIGTERM'));
 
 const main = async () => {
 	try {
