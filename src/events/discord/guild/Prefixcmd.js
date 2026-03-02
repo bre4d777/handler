@@ -218,7 +218,7 @@ const handleMentionOnly = async (message, client, guildPrefixes) => {
 		mentionContent.data.content =
 			`${emoji?.code || '📝'} **Server Prefixes**\n\n` +
 			`-# ${guildPrefixes.map((p) => `\`${p}\``).join(' • ')}` +
-			`\n\n-# Use \`${guildPrefixes[0]}help\` for commands\n-# Use \`${guildPrefixes[0]}play <query>\` to start playing a song`;
+			`\n\n-# Use \`${guildPrefixes[0]}help\` for commands\n`;
 		mentionContainer
 			.addTextDisplayComponents(mentionTitle)
 			.addSeparatorComponents(mentionSeparator)
