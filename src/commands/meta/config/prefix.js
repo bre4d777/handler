@@ -59,7 +59,7 @@ class PrefixCommand extends Command {
 
 	_renderPrefixEditor(prefixes, feedback = null) {
 		const container = new ContainerBuilder();
-		container.setAccentColor(colors.eleven);
+		container.setAccentColor(colors.bot);
 
 		const display = prefixes.map((p) => `\`${p}\``).join(' • ');
 

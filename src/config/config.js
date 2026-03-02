@@ -8,9 +8,10 @@ const isProduction = environment === 'production';
 
 const commonConfig = {
 	prefix: '.',
+	ownerIds: ['931059762173464597'],
 	
 	colors: {
-		eleven: [214, 211, 203],
+		bot: [214, 211, 203],
 		error: [230, 190, 175],
 		success: [140, 200, 170],
 		warn: [255, 190, 120],

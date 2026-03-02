@@ -41,7 +41,7 @@ class InviteCommand extends Command {
 	_createInviteView(ctx) {
 		const container = new ContainerBuilder();
 		const client = ctx.client;
-		container.setAccentColor(colors.eleven);
+		container.setAccentColor(colors.bot);
 
 		container.addTextDisplayComponents(
 			new TextDisplayBuilder().setContent(`## Invite ${client.user.username}`),
